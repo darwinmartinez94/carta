@@ -1,147 +1,413 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#3B0414">
-  <meta name="description" content="Toca aquí para abrir tu sorpresa...">
-  <title>Te envié algo especial 💌</title>
+const PARRAFOS_CARTA = [
+  "Desde el primer instante en que nuestros caminos se cruzaron, mi cosa hermosa, supe que mi vida había encontrado su verdadera luz. Cada vez que sonríe, mi mundo se detiene por completo y se llena de una paz infinita; su sonrisa es el refugio donde siempre quiero estar.",
+  "Aún guardo en mi memoria cada instante compartido, cada risa y cada momento que hace que nuestros días sean especiales, asi como caundo nos miramos debajo de aquel arbol en Catacamas. quiero decirle Gracias por ser esa mujer tan única, fuerte y maravillosa, por su ternura inagotable y por la forma tan hermosa en que ilumina mi vida entera.",
+  "Tambien me gustaria darle las gracias por el dia que nos miramos en tegucigalpa, fue uno de los mejores dias de mi vida, usted es lo más valioso que tengo. y para cerrar este detalle, le invito a descubrir la sorpresa que guardé al final de esta carta.",
+];
 
-  <!-- Vista previa al compartir el enlace -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Te envié algo especial 💌">
-  <meta property="og:description" content="Toca aquí para abrir tu sorpresa...">
-  <meta property="og:url" content="https://darwinmartinez94.github.io/carta/">
-  <meta property="og:image" content="https://darwinmartinez94.github.io/carta/assets/preview-wa.png">
-  <meta property="og:image:type" content="image/png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta name="twitter:card" content="summary_large_image">
+const VELOCIDAD_LETRA_MS = 28;
+const PAUSA_ENTRE_PARRAFOS_MS = 380;
+const DURACION_CIERRE_MODAL_MS = 330;
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
-  <script src="js/scripts.js" defer></script>
-</head>
-<body>
-  <canvas id="petals-canvas" aria-hidden="true"></canvas>
+document.addEventListener("DOMContentLoaded", () => {
+  const $ = (id) => document.getElementById(id);
 
-  <div class="bg-roses-decor" aria-hidden="true">
-    <svg class="corner-rose top-left" viewBox="0 0 200 200">
-      <path d="M20,20 C60,10 100,30 110,70 C120,110 80,150 40,140 C10,130 5,90 25,60 C45,30 85,40 90,75 C95,105 65,125 45,110 C25,95 35,65 60,65 C75,65 80,85 65,95" fill="none" stroke="rgba(247,198,208,.14)" stroke-width="3" stroke-linecap="round"/>
-      <path d="M115,65 Q155,45 175,15 Q155,75 110,95 Z" fill="rgba(229,194,122,.08)"/>
-    </svg>
-    <svg class="corner-rose bottom-right" viewBox="0 0 200 200">
-      <path d="M20,20 C60,10 100,30 110,70 C120,110 80,150 40,140 C10,130 5,90 25,60 C45,30 85,40 90,75 C95,105 65,125 45,110 C25,95 35,65 60,65 C75,65 80,85 65,95" fill="none" stroke="rgba(247,198,208,.14)" stroke-width="3" stroke-linecap="round"/>
-      <path d="M115,65 Q155,45 175,15 Q155,75 110,95 Z" fill="rgba(229,194,122,.08)"/>
-    </svg>
-  </div>
+  const el = {
+    envelope: $("envelope"),
+    heartTrigger: $("heart-trigger"),
+    introScreen: $("intro-screen"),
+    letterScreen: $("letter-screen"),
+    audio: $("bg-music"),
+    musicToggle: $("music-toggle"),
+    musicIcon: $("music-icon"),
+    musicLabel: $("music-label"),
+    typewriter: $("typewriter-container"),
+    skipContainer: $("skip-container"),
+    skipButton: $("skip-typewriter-btn"),
+    footer: $("letter-footer"),
+    openPhoto: $("open-photo-btn"),
+    modal: $("photo-modal"),
+    backdrop: $("modal-backdrop"),
+    closeTop: $("close-modal-top"),
+    closeBottom: $("close-modal-bottom"),
+    petalsCanvas: $("petals-canvas"),
+  };
 
-  <!-- Cambia assets/musica.mp3 por la ruta de tu archivo si es diferente -->
-  <audio id="bg-music" src="assets/musica.mp3" preload="auto" loop></audio>
+  let cartaAbierta = false;
+  let escrituraCompletada = false;
+  let timerEscritura = null;
+  let fadeAudioTimer = null;
+  let modalTimer = null;
+  let elementoQueAbrioModal = null;
+  let animacionPetalos = null;
+  let contextoPetalos = null;
+  let anchoCanvas = 0;
+  let altoCanvas = 0;
+  let dpr = 1;
+  let petalos = [];
 
-  <button id="music-toggle" class="music-btn hidden" type="button" aria-label="Reproducir música" aria-pressed="false">
-    <span id="music-icon" class="music-icon" aria-hidden="true">🔇</span>
-    <span id="music-label" class="music-label">Música</span>
-  </button>
+  // ---------- Utilidades ----------
+  const reducirMovimiento =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  <main class="app-container">
-    <section id="intro-screen" class="intro-screen">
-      <div class="envelope-stage">
-        <div id="envelope" class="envelope">
-          <div class="envelope-flap"></div>
-          <div class="envelope-letter-preview"><div class="preview-lines"></div></div>
-          <div class="envelope-pocket"></div>
+  function limpiarTimerEscritura() {
+    if (timerEscritura !== null) {
+      window.clearTimeout(timerEscritura);
+      timerEscritura = null;
+    }
+  }
 
-          <button id="heart-trigger" class="heart-seal-btn" type="button" aria-label="Abrir carta especial">
-            <span class="heart-glow-ring"></span>
-            <svg class="detailed-heart-svg" viewBox="0 0 200 185" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <radialGradient id="heartMainGrad" cx="35%" cy="30%" r="70%">
-                  <stop offset="0%" stop-color="#FF758F"/>
-                  <stop offset="35%" stop-color="#D91848"/>
-                  <stop offset="75%" stop-color="#8A0829"/>
-                  <stop offset="100%" stop-color="#4A0215"/>
-                </radialGradient>
-                <linearGradient id="goldRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#FFF3D1"/>
-                  <stop offset="50%" stop-color="#E5C27A"/>
-                  <stop offset="100%" stop-color="#9E7A32"/>
-                </linearGradient>
-                <filter id="heartDropShadow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#1f0109" flood-opacity=".7"/>
-                </filter>
-              </defs>
-              <path filter="url(#heartDropShadow)" d="M100,172 C100,172 16,118 16,58 C16,27 41,8 68,8 C85,8 95,18 100,29 C105,18 115,8 132,8 C159,8 184,27 184,58 C184,118 100,172 100,172 Z" fill="url(#heartMainGrad)" stroke="url(#goldRimGrad)" stroke-width="4.5"/>
-              <path d="M100,158 C100,158 28,110 28,58 C28,34 47,18 68,18 C83,18 94,27 100,38 C106,27 117,18 132,18 C153,18 172,34 172,58 C172,110 100,158 100,158 Z" fill="none" stroke="rgba(255,230,238,.32)" stroke-width="1.8" stroke-dasharray="4 3"/>
-              <path d="M42,52 C42,35 55,25 70,25 C75,25 78,28 75,32 C62,35 52,44 49,58 C47,63 42,59 42,52 Z" fill="rgba(255,255,255,.45)"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+  // ---------- Música ----------
+  function actualizarBotonMusica(reproduciendo) {
+    if (!el.musicToggle || !el.musicIcon || !el.musicLabel) return;
+    el.musicIcon.textContent = reproduciendo ? "🔊" : "🔇";
+    el.musicLabel.textContent = reproduciendo ? "Pausar" : "Música";
+    el.musicToggle.setAttribute(
+      "aria-label",
+      reproduciendo ? "Pausar música" : "Reproducir música",
+    );
+    el.musicToggle.setAttribute("aria-pressed", String(reproduciendo));
+  }
 
-      <div class="intro-prompt-box">
-        <p class="intro-prompt-text">Te envié algo especial, presiona el corazón para verlo</p>
-        <span class="tap-hint-sub">Toca el corazón para abrir tu carta ✨</span>
-      </div>
-    </section>
+  function detenerFadeAudio() {
+    if (fadeAudioTimer !== null) {
+      window.clearInterval(fadeAudioTimer);
+      fadeAudioTimer = null;
+    }
+  }
 
-    <section id="letter-screen" class="letter-screen hidden" aria-live="polite">
-      <article class="letter-card">
-        <div class="letter-ornament top-ornament" aria-hidden="true">
-          <span>✦</span><span class="ornament-line"></span><span>♥</span><span class="ornament-line"></span><span>✦</span>
-        </div>
+  function iniciarFadeAudio() {
+    if (!el.audio) return;
+    detenerFadeAudio();
 
-        <header class="letter-header">
-          <h1 class="letter-title">Para mi amor</h1>
-          <div class="title-divider"></div>
-        </header>
+    // En Safari de iOS el control programático de volumen puede estar limitado.
+    try {
+      el.audio.volume = 0.05;
+    } catch (_) {}
 
-        <div id="typewriter-container" class="letter-body"></div>
+    const promesa = el.audio.play();
+    if (promesa && typeof promesa.then === "function") {
+      promesa
+        .then(() => {
+          if (el.musicToggle) el.musicToggle.classList.remove("hidden");
+          actualizarBotonMusica(true);
 
-        <div id="skip-container" class="skip-typewriter-box">
-          <button id="skip-typewriter-btn" class="skip-btn" type="button">Mostrar toda la carta ▾</button>
-        </div>
+          let volumen = 0.05;
+          fadeAudioTimer = window.setInterval(() => {
+            if (!el.audio || el.audio.paused) {
+              detenerFadeAudio();
+              return;
+            }
+            volumen = Math.min(0.85, volumen + 0.05);
+            try {
+              el.audio.volume = volumen;
+            } catch (_) {}
+            if (volumen >= 0.85) detenerFadeAudio();
+          }, 180);
+        })
+        .catch(() => {
+          if (el.musicToggle) el.musicToggle.classList.remove("hidden");
+          actualizarBotonMusica(false);
+        });
+    } else {
+      if (el.musicToggle) el.musicToggle.classList.remove("hidden");
+      actualizarBotonMusica(!el.audio.paused);
+    }
+  }
 
-        <footer id="letter-footer" class="letter-footer invisible">
-          <div class="footer-divider"></div>
-          <p class="footer-special-message">Cada detalle de esta página fue pensado solo para ti, porque mereces todo lo bonito de este mundo y mucho más.</p>
-          <div class="sender-signature-block">
-            <span class="signature-pre">Con todo mi cariño,</span>
-            <strong class="sender-name">Coso</strong>
-          </div>
-          <button id="open-photo-btn" class="special-photo-btn" type="button">
-            <span class="btn-shimmer"></span>
-            <span class="btn-content">Ver algo hermoso 🌹</span>
-          </button>
-        </footer>
-      </article>
-    </section>
-  </main>
+  if (el.musicToggle && el.audio) {
+    el.musicToggle.addEventListener("click", () => {
+      if (el.audio.paused) {
+        const promesa = el.audio.play();
+        if (promesa && typeof promesa.then === "function") {
+          promesa
+            .then(() => actualizarBotonMusica(true))
+            .catch(() => actualizarBotonMusica(false));
+        } else {
+          actualizarBotonMusica(true);
+        }
+      } else {
+        el.audio.pause();
+        detenerFadeAudio();
+        actualizarBotonMusica(false);
+      }
+    });
 
-  <div id="photo-modal" class="photo-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal-caption-title">
-    <div id="modal-backdrop" class="modal-backdrop"></div>
-    <div class="modal-dialog" role="document">
-      <div class="modal-top-bar">
-        <button id="close-modal-top" class="modal-close-top-btn" type="button" aria-label="Cerrar ventana de foto">✕ Cerrar</button>
-      </div>
+    el.audio.addEventListener("pause", () => actualizarBotonMusica(false));
+    el.audio.addEventListener("play", () => actualizarBotonMusica(true));
+  }
 
-      <div class="romantic-photo-frame">
-        <div class="floating-hearts-bg" aria-hidden="true">
-          <span class="f-heart h1">♥</span><span class="f-heart h2">✦</span>
-          <span class="f-heart h3">♥</span><span class="f-heart h4">✦</span>
-        </div>
-        <div class="photo-wrapper">
-          <img id="girl-photo" src="assets/foto.jpeg" alt="La mujer más hermosa" class="full-body-photo" decoding="async">
-        </div>
-        <div class="photo-caption-box">
-          <p id="modal-caption-title" class="photo-caption-text">Tan radiante, única y hermosa como siempre ❤️</p>
-        </div>
-      </div>
+  // ---------- Máquina de escribir ----------
+  function mostrarPieCarta() {
+    if (el.footer) el.footer.classList.remove("invisible");
+    if (el.skipContainer) el.skipContainer.classList.add("hidden");
+  }
 
-      <button id="close-modal-bottom" class="modal-close-bottom-btn" type="button">Cerrar y volver a la carta</button>
-    </div>
-  </div>
-</body>
-</html>
+  function finalizarEscrituraCompleta() {
+    if (escrituraCompletada || !el.typewriter) return;
+    escrituraCompletada = true;
+    limpiarTimerEscritura();
+    el.typewriter.replaceChildren();
+
+    PARRAFOS_CARTA.forEach((texto) => {
+      const p = document.createElement("p");
+      p.className = "parrafo-carta";
+      p.textContent = texto;
+      el.typewriter.appendChild(p);
+    });
+
+    mostrarPieCarta();
+  }
+
+  function iniciarMaquinaDeEscribir() {
+    if (!el.typewriter) return;
+    limpiarTimerEscritura();
+    escrituraCompletada = false;
+    el.typewriter.replaceChildren();
+    if (el.footer) el.footer.classList.add("invisible");
+    if (el.skipContainer) el.skipContainer.classList.remove("hidden");
+
+    if (reducirMovimiento) {
+      finalizarEscrituraCompleta();
+      return;
+    }
+
+    const textos = PARRAFOS_CARTA.filter(
+      (p) => typeof p === "string" && p.length > 0,
+    );
+    if (textos.length === 0) {
+      finalizarEscrituraCompleta();
+      return;
+    }
+
+    let indiceParrafo = 0;
+    let indiceLetra = 0;
+    let parrafoActual = document.createElement("p");
+    parrafoActual.className = "parrafo-carta";
+    el.typewriter.appendChild(parrafoActual);
+
+    const cursor = document.createElement("span");
+    cursor.className = "typewriter-cursor";
+    cursor.setAttribute("aria-hidden", "true");
+    parrafoActual.appendChild(cursor);
+
+    function escribirCaracter() {
+      if (escrituraCompletada) return;
+
+      const texto = textos[indiceParrafo];
+      if (indiceLetra < texto.length) {
+        cursor.insertAdjacentText("beforebegin", texto.charAt(indiceLetra));
+        indiceLetra += 1;
+        timerEscritura = window.setTimeout(
+          escribirCaracter,
+          VELOCIDAD_LETRA_MS,
+        );
+        return;
+      }
+
+      indiceParrafo += 1;
+      indiceLetra = 0;
+
+      if (indiceParrafo >= textos.length) {
+        finalizarEscrituraCompleta();
+        return;
+      }
+
+      parrafoActual = document.createElement("p");
+      parrafoActual.className = "parrafo-carta";
+      el.typewriter.appendChild(parrafoActual);
+      parrafoActual.appendChild(cursor);
+      timerEscritura = window.setTimeout(
+        escribirCaracter,
+        PAUSA_ENTRE_PARRAFOS_MS,
+      );
+    }
+
+    escribirCaracter();
+  }
+
+  if (el.skipButton)
+    el.skipButton.addEventListener("click", finalizarEscrituraCompleta);
+  if (el.typewriter)
+    el.typewriter.addEventListener("click", finalizarEscrituraCompleta);
+
+  // ---------- Apertura del sobre ----------
+  function abrirCarta() {
+    if (cartaAbierta || !el.envelope || !el.introScreen || !el.letterScreen)
+      return;
+    cartaAbierta = true;
+
+    // Se llama directamente desde el toque/clic del usuario para cumplir la política de autoplay.
+    iniciarFadeAudio();
+    el.heartTrigger?.setAttribute("disabled", "disabled");
+    el.envelope.classList.add("is-opening");
+
+    window.setTimeout(() => {
+      el.introScreen.classList.add("fade-out");
+      window.setTimeout(() => {
+        el.introScreen.classList.add("hidden");
+        el.letterScreen.classList.remove("hidden");
+        window.scrollTo({
+          top: 0,
+          behavior: reducirMovimiento ? "auto" : "smooth",
+        });
+        iniciarMaquinaDeEscribir();
+      }, 560);
+    }, 850);
+  }
+
+  if (el.heartTrigger) el.heartTrigger.addEventListener("click", abrirCarta);
+
+  // ---------- Modal de fotografía ----------
+  function abrirModalFoto() {
+    if (!el.modal) return;
+    if (modalTimer !== null) {
+      window.clearTimeout(modalTimer);
+      modalTimer = null;
+    }
+
+    elementoQueAbrioModal = document.activeElement;
+    el.modal.hidden = false;
+    el.modal.classList.remove("hidden");
+    el.modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+
+    window.requestAnimationFrame(() => {
+      el.modal.classList.add("visible");
+      if (el.closeTop) el.closeTop.focus({ preventScroll: true });
+    });
+  }
+
+  function cerrarModalFoto() {
+    if (!el.modal || el.modal.hidden) return;
+    el.modal.classList.remove("visible");
+    el.modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+
+    if (modalTimer !== null) window.clearTimeout(modalTimer);
+    modalTimer = window.setTimeout(() => {
+      el.modal.classList.add("hidden");
+      el.modal.hidden = true;
+      modalTimer = null;
+      if (
+        elementoQueAbrioModal &&
+        typeof elementoQueAbrioModal.focus === "function"
+      ) {
+        elementoQueAbrioModal.focus({ preventScroll: true });
+      }
+    }, DURACION_CIERRE_MODAL_MS);
+  }
+
+  if (el.openPhoto) el.openPhoto.addEventListener("click", abrirModalFoto);
+  if (el.closeTop) el.closeTop.addEventListener("click", cerrarModalFoto);
+  if (el.closeBottom) el.closeBottom.addEventListener("click", cerrarModalFoto);
+  if (el.backdrop) el.backdrop.addEventListener("click", cerrarModalFoto);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && el.modal && !el.modal.hidden)
+      cerrarModalFoto();
+  });
+
+  // ---------- Pétalos en canvas ----------
+  function crearPetalo(aleatorio = false) {
+    return {
+      x: Math.random() * anchoCanvas,
+      y: aleatorio ? Math.random() * altoCanvas : -25,
+      size: 6 + Math.random() * 8,
+      speedY: 0.55 + Math.random() * 1.0,
+      speedX: -0.35 + Math.random() * 0.7,
+      angle: Math.random() * Math.PI * 2,
+      rotation: (Math.random() - 0.5) * 0.025,
+      sway: Math.random() * Math.PI * 2,
+      color: [
+        "rgba(158,20,50,.65)",
+        "rgba(217,4,41,.52)",
+        "rgba(247,198,208,.5)",
+        "rgba(232,141,156,.55)",
+      ][Math.floor(Math.random() * 4)],
+    };
+  }
+
+  function ajustarCanvas() {
+    if (!el.petalsCanvas || !contextoPetalos) return;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    anchoCanvas = window.innerWidth;
+    altoCanvas = window.innerHeight;
+    el.petalsCanvas.width = Math.round(anchoCanvas * dpr);
+    el.petalsCanvas.height = Math.round(altoCanvas * dpr);
+    el.petalsCanvas.style.width = `${anchoCanvas}px`;
+    el.petalsCanvas.style.height = `${altoCanvas}px`;
+    contextoPetalos.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function dibujarPetalos() {
+    if (!contextoPetalos || document.hidden) {
+      animacionPetalos = null;
+      return;
+    }
+
+    contextoPetalos.clearRect(0, 0, anchoCanvas, altoCanvas);
+    for (let i = 0; i < petalos.length; i += 1) {
+      const p = petalos[i];
+      p.sway += 0.018;
+      p.y += p.speedY;
+      p.x += p.speedX + Math.sin(p.sway) * 0.32;
+      p.angle += p.rotation;
+      if (p.y > altoCanvas + 25) {
+        petalos[i] = crearPetalo(false);
+        continue;
+      }
+
+      contextoPetalos.save();
+      contextoPetalos.translate(p.x, p.y);
+      contextoPetalos.rotate(p.angle);
+      contextoPetalos.fillStyle = p.color;
+      contextoPetalos.beginPath();
+      contextoPetalos.moveTo(0, -p.size);
+      contextoPetalos.bezierCurveTo(p.size, -p.size, p.size, p.size, 0, p.size);
+      contextoPetalos.bezierCurveTo(
+        -p.size,
+        p.size,
+        -p.size,
+        -p.size,
+        0,
+        -p.size,
+      );
+      contextoPetalos.fill();
+      contextoPetalos.restore();
+    }
+
+    animacionPetalos = window.requestAnimationFrame(dibujarPetalos);
+  }
+
+  function iniciarPetalos() {
+    if (!el.petalsCanvas || reducirMovimiento) return;
+    contextoPetalos = el.petalsCanvas.getContext("2d");
+    if (!contextoPetalos) return;
+    ajustarCanvas();
+    petalos = Array.from({ length: 22 }, () => crearPetalo(true));
+    if (animacionPetalos === null)
+      animacionPetalos = window.requestAnimationFrame(dibujarPetalos);
+  }
+
+  function pausarPetalos() {
+    if (animacionPetalos !== null) {
+      window.cancelAnimationFrame(animacionPetalos);
+      animacionPetalos = null;
+    }
+  }
+
+  window.addEventListener("resize", ajustarCanvas, { passive: true });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) pausarPetalos();
+    else if (
+      contextoPetalos &&
+      !reducirMovimiento &&
+      animacionPetalos === null
+    ) {
+      animacionPetalos = window.requestAnimationFrame(dibujarPetalos);
+    }
+  });
+
+  iniciarPetalos();
+});
