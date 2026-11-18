@@ -1,0 +1,821 @@
+/* ==========================================================================
+   VARIABLES DE DISEÑO Y PALETA DE COLORES
+   ========================================================================== */
+:root {
+  --wine-deep: #24010B;
+  --wine-dark: #3B0414;
+  --wine-mid: #6E0B26;
+  --crimson: #9E1432;
+  --rose-accent: #D91848;
+  --pink-soft: #F7C6D0;
+  --pink-dusty: #E88D9C;
+  --cream-paper: #FFF9FA;
+  --cream-warm: #FDF0F3;
+  --gold-champagne: #E5C27A;
+  --gold-light: #FFF3D1;
+  --text-dark: #3A0A18;
+  --text-muted: #70263A;
+
+  --font-script: 'Great Vibes', cursive;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ==========================================================================
+   RESET Y OPTIMIZACIÓN MÓVIL (iOS SAFARI & ANDROID CHROME)
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background-color: var(--wine-deep);
+  color: var(--cream-paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+}
+
+body {
+  background:
+    radial-gradient(circle at 50% 25%, rgba(158, 20, 50, 0.45) 0%, transparent 65%),
+    radial-gradient(circle at 50% 85%, rgba(110, 11, 38, 0.5) 0%, transparent 70%),
+    linear-gradient(165deg, var(--wine-dark) 0%, #2B020E 55%, #1A0007 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+body.modal-open {
+  overflow: hidden;
+  touch-action: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ==========================================================================
+   FONDO: CANVAS DE PÉTALOS Y ROSAS DECORATIVAS
+   ========================================================================== */
+#petals-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bg-roses-decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.corner-rose {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  opacity: 0.85;
+}
+
+.corner-rose.top-left {
+  top: -30px;
+  left: -30px;
+}
+
+.corner-rose.bottom-right {
+  bottom: -30px;
+  right: -30px;
+  transform: rotate(180deg);
+}
+
+/* ==========================================================================
+   BOTÓN FLOTANTE DE MÚSICA
+   ========================================================================== */
+.music-btn {
+  position: fixed;
+  top: calc(14px + var(--safe-top));
+  right: 14px;
+  z-index: 50;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(59, 4, 20, 0.82);
+  border: 1px solid rgba(229, 194, 122, 0.55);
+  color: var(--pink-soft);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.music-btn:active {
+  transform: scale(0.94);
+}
+
+/* ==========================================================================
+   CONTENEDOR PRINCIPAL Y PANTALLA 1 (SOBRE Y CORAZÓN)
+   ========================================================================== */
+.app-container {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(20px + var(--safe-top)) 16px calc(24px + var(--safe-bottom));
+}
+
+.intro-screen {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.intro-screen.fade-out {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.96);
+  pointer-events: none;
+}
+
+/* Escenario del Sobre 3D */
+.envelope-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  perspective: 1100px;
+}
+
+.envelope {
+  position: relative;
+  width: min(330px, 88vw);
+  height: 225px;
+  background: linear-gradient(145deg, #54061C 0%, #380312 100%);
+  border-radius: 12px;
+  border: 1.5px solid rgba(229, 194, 122, 0.45);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.65),
+    0 0 30px rgba(217, 24, 72, 0.22),
+    inset 0 0 20px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Solapa superior del sobre */
+.envelope-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 58%;
+  background: linear-gradient(180deg, #750B29 0%, #4E061A 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transition: transform 0.85s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.2s 0.4s;
+  z-index: 4;
+  border-top-left-radius: 11px;
+  border-top-right-radius: 11px;
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.45));
+}
+
+/* Bolsillo frontal del sobre */
+.envelope-pocket {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(33deg, #470417 48%, transparent 50%),
+    linear-gradient(-33deg, #3F0314 48%, transparent 50%),
+    linear-gradient(0deg, #5E0820 0%, #460517 52%, transparent 53%);
+  border-radius: 11px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Borde dorado sutil en el sobre */
+.envelope::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(229, 194, 122, 0.25);
+  border-radius: 8px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Vista previa de la hoja que sube al abrirse el sobre */
+.envelope-letter-preview {
+  position: absolute;
+  bottom: 14px;
+  width: 86%;
+  height: 78%;
+  background: linear-gradient(180deg, var(--cream-paper) 0%, var(--cream-warm) 100%);
+  border-radius: 8px;
+  border: 1px solid var(--gold-champagne);
+  z-index: 2;
+  padding: 18px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.45s;
+}
+
+.preview-lines {
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(158, 20, 50, 0.16) 0px,
+    rgba(158, 20, 50, 0.16) 2px,
+    transparent 2px,
+    transparent 14px
+  );
+}
+
+/* Estado cuando el usuario presiona el corazón: El sobre se abre */
+.envelope.is-opening .envelope-flap {
+  transform: rotateX(180deg);
+  z-index: 1;
+}
+
+.envelope.is-opening .envelope-letter-preview {
+  transform: translateY(-105px);
+}
+
+.envelope.is-opening .heart-seal-btn {
+  transform: scale(1.25);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Botón del Corazón Central */
+.heart-seal-btn {
+  position: relative;
+  z-index: 6;
+  width: 114px;
+  height: 114px;
+  margin-top: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.45s ease, opacity 0.45s ease;
+  animation: heartSoftBeat 2.4s infinite ease-in-out;
+}
+
+.detailed-heart-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 14px rgba(255, 77, 115, 0.55));
+}
+
+.heart-glow-ring {
+  position: absolute;
+  width: 95px;
+  height: 95px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 117, 143, 0.55) 0%, rgba(229, 194, 122, 0.25) 45%, transparent 72%);
+  animation: ringPulse 2.4s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes heartSoftBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  18% {
+    transform: scale(1.07);
+  }
+  34% {
+    transform: scale(0.99);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+}
+
+/* Caja del texto guía en la entrada */
+.intro-prompt-box {
+  text-align: center;
+  padding: 18px 22px;
+  background: rgba(36, 1, 11, 0.62);
+  border: 1px solid rgba(247, 198, 208, 0.3);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+
+.intro-prompt-text {
+  font-family: var(--font-serif);
+  font-size: 1.32rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--cream-paper);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  margin-bottom: 6px;
+}
+
+.tap-hint-sub {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--gold-champagne);
+  letter-spacing: 0.4px;
+}
+
+/* ==========================================================================
+   PANTALLA 2: LA CARTA ROMÁNTICA
+   ========================================================================== */
+.letter-screen {
+  width: 100%;
+  max-width: 520px;
+  margin: 12px auto;
+  animation: letterReveal 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes letterReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(35px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.letter-card {
+  position: relative;
+  background:
+    radial-gradient(circle at top right, rgba(247, 198, 208, 0.38), transparent 55%),
+    radial-gradient(circle at bottom left, rgba(232, 141, 156, 0.25), transparent 55%),
+    linear-gradient(180deg, #FFFDFD 0%, #FFF4F7 100%);
+  color: var(--text-dark);
+  border-radius: 20px;
+  padding: 32px 24px 30px;
+  border: 2px solid var(--pink-dusty);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(229, 194, 122, 0.5),
+    inset 0 0 0 6px rgba(255, 255, 255, 0.7),
+    inset 0 0 0 7.5px rgba(217, 24, 72, 0.18);
+}
+
+.letter-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--crimson);
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+  opacity: 0.8;
+}
+
+.ornament-line {
+  width: 45px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-champagne), var(--crimson), var(--gold-champagne), transparent);
+}
+
+.letter-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.letter-title {
+  font-family: var(--font-script);
+  font-size: clamp(2.7rem, 10vw, 3.6rem);
+  font-weight: 400;
+  line-height: 1.15;
+  background: linear-gradient(135deg, #8A0829 0%, #D91848 52%, #E86F88 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(158, 20, 50, 0.15));
+  padding: 4px 0;
+}
+
+.title-divider {
+  width: 90px;
+  height: 2px;
+  margin: 6px auto 0;
+  background: linear-gradient(90deg, transparent, var(--pink-dusty), var(--crimson), var(--pink-dusty), transparent);
+  border-radius: 2px;
+}
+
+/* Cuerpo de la carta (Máquina de escribir) */
+.letter-body {
+  font-family: var(--font-serif);
+  font-size: 1.22rem;
+  line-height: 1.72;
+  color: var(--text-dark);
+  min-height: 180px;
+  text-align: left;
+}
+
+.letter-body p {
+  margin-bottom: 16px;
+  text-indent: 1em;
+}
+
+.letter-body p:last-child {
+  margin-bottom: 8px;
+}
+
+/* Cursor parpadeante mientras escribe */
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background-color: var(--crimson);
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  animation: blinkCursor 0.75s infinite;
+}
+
+@keyframes blinkCursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Botón discreto para mostrar toda la carta de golpe */
+.skip-typewriter-box {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.skip-btn {
+  background: rgba(158, 20, 50, 0.08);
+  border: 1px solid rgba(158, 20, 50, 0.25);
+  color: var(--crimson);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  min-height: 36px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.skip-btn:active {
+  background: rgba(158, 20, 50, 0.18);
+}
+
+/* Pie de página de la carta */
+.letter-footer {
+  margin-top: 20px;
+  padding-top: 18px;
+  text-align: center;
+}
+
+.footer-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(158, 20, 50, 0.35), transparent);
+  margin-bottom: 18px;
+}
+
+.footer-special-message {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.12rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+  padding: 0 6px;
+}
+
+/* Bloque destacado para el nombre de quien envía */
+.sender-signature-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(247, 198, 208, 0.35) 0%, rgba(255, 243, 209, 0.35) 100%);
+  border: 1px dashed rgba(158, 20, 50, 0.35);
+  border-radius: 14px;
+}
+
+.signature-pre {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--text-muted);
+}
+
+.sender-name {
+  font-family: var(--font-serif);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--wine-mid);
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(229, 194, 122, 0.45);
+}
+
+/* Botón llamativo para abrir el modal de la foto */
+.special-photo-btn {
+  position: relative;
+  width: 100%;
+  min-height: 54px;
+  padding: 14px 22px;
+  border: 1.5px solid var(--gold-champagne);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--wine-mid) 0%, var(--rose-accent) 55%, var(--wine-dark) 100%);
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow:
+    0 10px 24px rgba(158, 20, 50, 0.42),
+    0 0 15px rgba(217, 24, 72, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.special-photo-btn:active {
+  transform: scale(0.97);
+}
+
+.btn-content {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-shimmer {
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.32),
+    transparent
+  );
+  transform: skewX(-20deg);
+  animation: shimmerSweep 3.2s infinite;
+}
+
+@keyframes shimmerSweep {
+  0% { left: -120%; }
+  55%, 100% { left: 150%; }
+}
+
+/* ==========================================================================
+   PANTALLA 3: MODAL ELEGANTE PARA LA FOTOGRAFÍA VERTICAL
+   ========================================================================== */
+.photo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(12px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));
+  animation: modalFadeIn 0.35s ease forwards;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgba(158, 20, 50, 0.45) 0%, rgba(24, 1, 8, 0.94) 75%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.modal-dialog {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 410px;
+  max-height: 94dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: modalCardPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes modalCardPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Barra superior con botón explícito "✕ Cerrar" */
+.modal-top-bar {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.modal-close-top-btn {
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(59, 4, 20, 0.9);
+  border: 1.5px solid var(--gold-champagne);
+  color: var(--cream-paper);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close-top-btn:active {
+  transform: scale(0.95);
+}
+
+/* Marco especial para enamorados que envuelve la foto vertical */
+.romantic-photo-frame {
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(247, 198, 208, 0.22), transparent 65%),
+    linear-gradient(160deg, #4B0519 0%, #2B020D 100%);
+  border: 2px solid var(--gold-champagne);
+  border-radius: 20px;
+  padding: 12px 12px 14px;
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.75),
+    0 0 28px rgba(232, 141, 156, 0.35),
+    inset 0 0 18px rgba(229, 194, 122, 0.22);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Corazones y destellos flotantes en el fondo del marco */
+.floating-hearts-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.f-heart {
+  position: absolute;
+  color: rgba(247, 198, 208, 0.45);
+  font-size: 1.1rem;
+  animation: floatSparkle 4s infinite ease-in-out;
+}
+
+.f-heart.h1 { top: 8%; left: 7%; animation-delay: 0s; }
+.f-heart.h2 { top: 14%; right: 8%; color: rgba(229, 194, 122, 0.55); animation-delay: 1s; }
+.f-heart.h3 { bottom: 18%; left: 8%; animation-delay: 2s; }
+.f-heart.h4 { bottom: 14%; right: 7%; color: rgba(229, 194, 122, 0.55); animation-delay: 1.5s; }
+
+@keyframes floatSparkle {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.45; }
+  50% { transform: translateY(-8px) scale(1.2); opacity: 0.9; }
+}
+
+/* Contenedor de la fotografía vertical de cuerpo completo (sin recortes) */
+.photo-wrapper {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 0, 6, 0.55);
+  border-radius: 14px;
+  padding: 6px;
+  border: 1px solid rgba(247, 198, 208, 0.35);
+}
+
+.full-body-photo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 60dvh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+.photo-caption-box {
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+  text-align: center;
+  padding: 0 6px;
+}
+
+.photo-caption-text {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--pink-soft);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Botón #2 inferior ancho y claro para volver a la carta */
+.modal-close-bottom-btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--cream-paper);
+  border: 2px solid var(--gold-champagne);
+  color: var(--wine-dark);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s ease;
+}
+
+.modal-close-bottom-btn:active {
+  transform: scale(0.97);
+}
+
+/* Ajustes para pantallas muy pequeñas (ej. iPhone SE) */
+@media (max-height: 670px) {
+  .full-body-photo {
+    max-height: 53dvh;
+  }
+  .letter-card {
+    padding: 24px 18px;
+  }
+}
